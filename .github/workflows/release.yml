@@ -34,7 +34,7 @@ jobs:
         with:
           repository: ActivityWatch/aw-webui
           path: aw-webui
-          ref: 291da6f2c5e7a6b896f23a4eec5ffed9874321ba
+          ref: 3b1c444499d0968e16a89870dd055c16d7421adf
           submodules: true
       - name: Use Node.js
         uses: actions/setup-node@v3
