@@ -2,7 +2,8 @@ use anyhow::{anyhow, Context};
 use chrono::TimeDelta;
 use serde::Deserialize;
 use serde_default::DefaultFromSerde;
-use std::{fs, io::ErrorKind, path::Path, path::PathBuf};
+use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
+use std::{fs, io::ErrorKind, io::Write, path::Path, path::PathBuf};
 
 use crate::config::defaults;
 
@@ -151,14 +152,23 @@ impl FileConfig {
                 anyhow::bail!("Config file is not accessible at {}", config_path.display());
             }
             let config = default_config();
-            let error = std::fs::create_dir(config_path.parent().unwrap());
+            // The config can hold the server API key, so keep it private to the user.
+            let error = fs::DirBuilder::new()
+                .mode(0o700)
+                .create(config_path.parent().unwrap());
             if let Err(e) = error {
                 if e.kind() != ErrorKind::AlreadyExists {
                     Err(e)?;
                 }
             }
             debug!("Creading config at {}", config_path.display());
-            std::fs::write(&config_path, config)?;
+            fs::OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .mode(0o600)
+                .open(&config_path)?
+                .write_all(config.as_bytes())?;
 
             Self::default()
         };
